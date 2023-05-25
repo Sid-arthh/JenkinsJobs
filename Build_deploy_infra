@@ -1,0 +1,103 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = "us-east-1"
+        ECR_REPO_NAME = "springapp4"
+        GIT_COMMIT = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
+    }
+
+    stages {
+        stage('clean workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'credential-ssh', url: 'git@github.com:k-Richie/SpringCISecure.git'
+            }
+        }
+        
+        stage('Create or Update EcrStack') {
+            steps {
+                script {
+                    def stackExists = true
+                    // Check if the stack already exists
+                    try {
+                        sh 'aws ecr describe-repositories --repository-names $ECR_REPO_NAME --region ${AWS_REGION}'
+                    } catch (Exception) {
+                        // Stack does not exist
+                        stackExists = false
+                    }
+
+                    if (!stackExists) {
+                        // Stack exists, perform an update
+                        sh "aws ecr create-repository --repository-name ${ECR_REPO_NAME} --region ${AWS_REGION}"
+                    } 
+                }
+            }
+        }
+        
+        stage('Build Java APP') {
+            steps {
+                dir('app'){
+                    sh "mvn clean package"
+                }
+            }
+        }
+        stage('Building Docker Image') {
+            steps {
+                dir('app'){
+                    sh 'docker build -t $ECR_REPO_NAME .'
+                }
+            }
+        }
+        stage('Push Image To Ecr') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    dir('app'){
+                        sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 864543196770.dkr.ecr.us-east-1.amazonaws.com"
+                        sh 'docker tag $ECR_REPO_NAME 864543196770.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO_NAME:${GIT_COMMIT}'
+                        sh 'docker push 864543196770.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO_NAME:${GIT_COMMIT}'
+                    }
+                }
+            }
+        }
+        stage('Update ecs ParameterFile for image uri'){
+            steps{
+                dir('ecs-service'){
+                sh 'sed -i "s#\\"ParameterValue\\": \\"url\\"#\\"ParameterValue\\": \\"864543196770.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO_NAME:${GIT_COMMIT}\\"#" dev.json'
+                }
+            }
+        }
+        
+        stage('Create or Update Stack') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+
+                    script {    
+                    def stackNames = ['ParaStore', 'landing-zone', 'rds', 'ecs-cluster', 'ecs-asg', 'ecs-service']
+                
+                    
+                     stackNames.each { stackName ->
+                        stage("Deploy ${stackName} Stack") {
+                                
+                                script {
+
+                                  if (fileExists("${stackName}/dev.json")){
+                                    sh "aws cloudformation deploy --template-file ${stackName}/cfm.yaml --parameter-overrides file://${stackName}/dev.json  --stack-name ${stackName} --capabilities CAPABILITY_NAMED_IAM --region us-east-1"
+                                  }else {
+                                    sh "aws cloudformation deploy --template-file ${stackName}/cfm.yaml --stack-name ${stackName} --region us-east-1 --capabilities CAPABILITY_NAMED_IAM"
+                                        }
+                                    sh "aws cloudformation wait stack-create-complete --stack-name ${stackName} --region us-east-1"
+                                  
+                                    }        
+                            }
+                        }                   
+                    }  
+                }
+            }
+        }
+    }
+}
