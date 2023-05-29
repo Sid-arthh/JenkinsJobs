@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = "us-east-1"
+        ECR_REPO_NAME = "springapp4"
+        // GIT_COMMIT = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
+    }
+
+    stages {
+        stage('clean workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'credential-ssh', url: 'git@github.com:k-Richie/SpringCISecure.git'
+            }
+        }
+        
+   
+        stage('Update ecs ParameterFile'){
+            steps{
+                dir('ecs-service'){
+                sh 'sed -i "s#\\"ParameterValue\\": \\"url\\"#\\"ParameterValue\\": \\"864543196770.dkr.ecr.us-east-1.amazonaws.com/$ECR_REPO_NAME:${Commit_Id}\\"#" dev.json'
+                }
+            }
+        }
+        
+        stage('Create or Update Stack') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+
+                    script {    
+                    def stackNames = ['ecs-service']
+                
+                    
+                     stackNames.each { stackName ->
+                        stage("Deploy ${stackName} Stack") {
+                                
+                                script {
+
+                                  if (fileExists("${stackName}/dev.json")){
+                                    sh "aws cloudformation deploy --template-file ${stackName}/cfn.yaml --parameter-overrides file://${stackName}/dev.json  --stack-name ${stackName} --capabilities CAPABILITY_NAMED_IAM --region us-east-1"
+                                  }else {
+                                    sh "aws cloudformation deploy --template-file ${stackName}/cfn.yaml --stack-name ${stackName} --region us-east-1 --capabilities CAPABILITY_NAMED_IAM"
+                                        }
+                                    }
+                                 }
+                              } 
+                          }  
+                      }
+                  }
+              }
+          }
+
+
+}
