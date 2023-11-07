@@ -1,5 +1,9 @@
 pipeline {
   agent any
+  environment {
+      appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards-portal", "webapi"]
+      EnvironmentName = "dev"
+    }
   triggers {
     cron('0 12 * * *') // Trigger at 12:00 PM (noon)
     cron('0 15 * * *') // Trigger at 3:00 PM
@@ -19,5 +23,16 @@ pipeline {
         }
       }
     }
+  stage('LOOP'){
+        appNames.each { appName ->
+          stage("Deploy ${appName} Stack") {
+                  script {
+                          def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
+                          echo constructedString
+                             }
+                        
+                            }
+                        } 
+  }
   }
 }
