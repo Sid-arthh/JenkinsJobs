@@ -1,12 +1,12 @@
 pipeline {
   agent any
-  environment {
-      appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards-portal", "webapi"]
-      EnvironmentName = "dev"
-    }
   triggers {
     cron('0 12 * * *') // Trigger at 12:00 PM (noon)
     cron('0 15 * * *') // Trigger at 3:00 PM
+  }
+  environment {
+    appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards-portal", "webapi"]
+    EnvironmentName = "dev"
   }
   stages {
     stage('Print Greeting') {
@@ -23,16 +23,21 @@ pipeline {
         }
       }
     }
-  stage('LOOP'){
-        appNames.each { appName ->
-          stage("Deploy ${appName} Stack") {
-                  script {
-                          def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
-                          echo constructedString
-                             }
-                        
-                            }
-                        } 
-  }
+    stage('LOOP') {
+      steps {
+        script {
+          appNames.each { appName ->
+            stage("Deploy ${appName} Stack") {
+              steps {
+                script {
+                  def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
+                  echo constructedString
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
