@@ -1,10 +1,22 @@
 pipeline {
   agent any
-  triggers { cron('*/1 * * * *') }
+  triggers {
+    cron('0 12 * * *') // Trigger at 12:00 PM (noon)
+    cron('0 15 * * *') // Trigger at 3:00 PM
+  }
   stages {
-    stage('Print Hello') {
+    stage('Print Greeting') {
       steps {
-        echo "Hello"
+        script {
+          def currentHour = new Date().format("HH")
+          if (currentHour == "12") {
+            echo "Hello Day"
+          } else if (currentHour == "15") {
+            echo "Hello Afternoon"
+          } else {
+            echo "No greeting for this time."
+          }
+        }
       }
     }
   }
