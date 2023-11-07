@@ -23,12 +23,10 @@ pipeline {
         script {
           appNames.each { appName ->
             stage("Deploy ${appName} Stack") {
-              steps {
                 script {
                   def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
                   echo constructedString
                 }
-              }
             }
           }
         }
