@@ -1,23 +1,9 @@
+def appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards-portal", "webapi"]
+def EnvironmentName = "dev"
+
 pipeline {
   agent any
-  triggers {
-    cron('0 12 * * *') // Trigger at 12:00 PM (noon)
-    cron('0 15 * * *') // Trigger at 3:00 PM
-  }
   stages {
-    stage('Define Environment Variables') {
-      steps {
-        script {
-          def appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards-portal", "webapi"]
-          def EnvironmentName = "dev"
-
-          currentBuild.withContext {
-            env.appNames = appNames.join(',')
-            env.EnvironmentName = EnvironmentName
-          }
-        }
-      }
-    }
     stage('Print Greeting') {
       steps {
         script {
@@ -35,8 +21,6 @@ pipeline {
     stage('LOOP') {
       steps {
         script {
-          def appNames = env.appNames.split(',')
-          def EnvironmentName = env.EnvironmentName
           appNames.each { appName ->
             stage("Deploy ${appName} Stack") {
               steps {
