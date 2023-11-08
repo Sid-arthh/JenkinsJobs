@@ -23,9 +23,9 @@ pipeline {
             }
              sh'''aws autoscaling update-auto-scaling-group \
               --auto-scaling-group-name "rise-${app_name}-${env}-ASG" \
-              --min-size "$size" \
-              --max-size "$size" \
-              --desired-capacity "$size"
+              --min-size $size \
+              --max-size $size \
+              --desired-capacity $size
                '''
              echo size
           }
