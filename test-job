@@ -21,11 +21,11 @@ pipeline {
             } else {
               echo "The start or stopTime is not configured correct,Please Verify"
             }
-             sh'''aws autoscaling update-auto-scaling-group \
-              --auto-scaling-group-name "rise-${app_name}-${env}-ASG" \
+            sh """aws autoscaling update-auto-scaling-group \
+              --auto-scaling-group-name 'rise-${appName}-${EnvironmentName}-ASG' \
               --min-size $size \
               --max-size $size \
-              --desired-capacity $size
+              --desired-capacity $size"""ize
                '''
              echo size
           }
