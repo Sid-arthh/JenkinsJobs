@@ -1,5 +1,7 @@
 def appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards-portal", "webapi"]
 def EnvironmentName = "dev"
+def StartTime = "12"
+def StopTime = "15"
 
 pipeline {
   agent any
@@ -7,29 +9,27 @@ pipeline {
     stage('Print Greeting') {
       steps {
         script {
-          def currentHour = new Date().format("HH")
-          if (currentHour == "12") {
-            echo "Hello Day"
-          } else if (currentHour == "15") {
-            echo "Hello Afternoon"
-          } else {
-            echo "No greeting for this time."
-          }
+
         }
       }
     }
     stage('LOOP') {
       steps {
         script {
-          appNames.each { appName ->
-            stage("Deploy ${appName} Stack") {
-                script {
                   def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
-                  echo constructedString
+                  def currentHour = new Date().format("HH")
+                  appNames.each { appName ->
+                  if (currentHour <= startTime) {
+                    echo constructedString
+                  } else if (currentHour >= stopTime) {
+                    echo "Hello Afternoon"
+                  } else {
+                    echo "No greeting for this time."
+                  }
+                  
+                  
                 }
             }
-          }
-        }
       }
     }
   }
