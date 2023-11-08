@@ -26,7 +26,7 @@ pipeline {
               --min-size $size \
               --max-size $size \
               --desired-capacity $size"""ize
-               '''
+               """
              echo size
           }
         }
