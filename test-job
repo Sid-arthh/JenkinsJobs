@@ -5,6 +5,10 @@ def stopTime = 15 // Use integers, not strings
 def size = 1
 pipeline {
   agent any
+  triggers {
+    cron('0 12 * * *') // Trigger at 12:00 PM (noon)
+    cron('0 15 * * *') // Trigger at 3:00 PM
+  }
   stages {
     stage('LOOP') {
       steps {
