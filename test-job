@@ -2,7 +2,7 @@ def appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards
 def EnvironmentName = "dev"
 def startTime = 12 // Use integers, not strings
 def stopTime = 15 // Use integers, not strings
-
+def size = "1"
 pipeline {
   agent any
   stages {
@@ -12,13 +12,21 @@ pipeline {
           def currentHour = new Date().format("HH")
           appNames.each { appName ->
             def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
-            if (currentHour.toInteger() <= startTime) { // Convert to integers
-              echo constructedString
+            if (currentHour.toInteger() <= startTime) { 
+              size = "0"
             } else if (currentHour.toInteger() >= stopTime) { // Convert to integers
               echo "Hello Afternoon"
+              size = "1"
             } else {
-              echo "No greeting for this time."
+              echo "The start or stopTime is not configured correct,Please Verify"
             }
+             sh'''aws autoscaling update-auto-scaling-group \
+              --auto-scaling-group-name "rise-${app_name}-${env}-ASG" \
+              --min-size "$size" \
+              --max-size "$size" \
+              --desired-capacity "$size"
+               '''
+             echo size
           }
         }
       }
