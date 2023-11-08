@@ -6,13 +6,6 @@ def StopTime = "15"
 pipeline {
   agent any
   stages {
-    stage('Print Greeting') {
-      steps {
-        script {
-
-        }
-      }
-    }
     stage('LOOP') {
       steps {
         script {
