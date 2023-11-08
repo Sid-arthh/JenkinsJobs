@@ -14,6 +14,7 @@ pipeline {
             def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
             if (currentHour.toInteger() <= startTime) { 
               size = 0
+              echo "$size"
             } else if (currentHour.toInteger() >= stopTime) { // Convert to integers
               echo "Hello Afternoon"
               size = 1
