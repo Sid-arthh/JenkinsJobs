@@ -25,7 +25,7 @@ pipeline {
               --auto-scaling-group-name 'rise-${appName}-${EnvironmentName}-ASG' \
               --min-size $size \
               --max-size $size \
-              --desired-capacity $size"""ize
+              --desired-capacity $size
                """
              echo size
           }
