@@ -2,16 +2,15 @@ def appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards
 def EnvironmentName = "dev"
 def size
 
-// Determine whether start_Time or stop_Time is defined and set the time variable accordingly
 def time
-if (params.start_Time) {
-    time = params.start_Time
+if (params.start_time) {
+    time = params.start_time
     size = 1
-} else if (params.stop_Time) {
+} else if (params.stop_time) {
     size = 0
-    time = params.stop_Time
+    time = params.stop_time
 } else {
-    error('Either start_Time or stop_Time must be defined.')
+    error('Either start_time or stop_time must be defined.')
 }
 
 pipeline {
