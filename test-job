@@ -1,30 +1,31 @@
 def appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards-portal", "webapi"]
 def EnvironmentName = "dev"
-def startTime = 11 // Use integers, not strings
-def stopTime = 15 // Use integers, not strings
-def size = 1
+def size
+
+// Determine whether start_Time or stop_Time is defined and set the time variable accordingly
+def time
+if (params.start_Time) {
+    time = params.start_Time
+    size = 1
+} else if (params.stop_Time) {
+    size = 0
+    time = params.stop_Time
+} else {
+    error('Either start_Time or stop_Time must be defined.')
+}
 
 pipeline {
   agent any
   triggers {
-    cron('0 12,13 * * *') // Trigger at 12:00 PM (noon)
+    cron("${time}") 
   }
   stages {
     stage('LOOP') {
       steps {
         script {
-          def currentHour = new Date().format("HH")
           appNames.each { appName ->
             def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
-            if (currentHour.toInteger() == startTime) { 
-              size = 1
-              echo "$size"
-            } else if (currentHour.toInteger() == stopTime) {
-              echo "Hello Afternoon"
-              size = 0
-            } else {
-              echo "The start or stopTime is not configured correctly, Please Verify"
-            }
+
             try {
               sh """aws autoscaling update-auto-scaling-group \
                 --auto-scaling-group-name 'rise-${appName}-${EnvironmentName}-ASG' \
@@ -32,7 +33,6 @@ pipeline {
                 --max-size $size \
                 --desired-capacity $size
               """
-              echo size
             } catch (Exception e) {
               currentBuild.result = 'SUCCESS' // Set the result to SUCCESS even if the sh command fails
               echo "Exception occurred: ${e.message}"
