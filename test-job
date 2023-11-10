@@ -22,7 +22,6 @@ if (params.start_time) {
 pipeline {
   agent any
   triggers {
-triggers {
     cron("${time} ${cronExpression}")
     }
 
