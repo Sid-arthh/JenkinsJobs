@@ -22,8 +22,9 @@ if (params.start_time) {
 pipeline {
   agent any
   triggers {
-    cron("${time}", cronExpression) // Set the cron expression dynamically
-  }
+        cron(name: "Custom Cron Trigger", spec: "${time} ${cronExpression}")
+    }
+
   stages {
     stage('LOOP') {
       steps {
