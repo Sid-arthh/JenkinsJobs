@@ -23,6 +23,8 @@ pipeline {
   agent any
   triggers {
     cron("${time}")
+    }
+    triggers {
     cron("${cronExpression}")
     }
 
