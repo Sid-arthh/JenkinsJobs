@@ -22,10 +22,7 @@ if (params.start_time) {
 pipeline {
   agent any
   triggers {
-    cron("${time}")
-    }
-    triggers {
-    cron("${cronExpression}")
+    cron("${time},${cronExpression}")
     }
 
   stages {
