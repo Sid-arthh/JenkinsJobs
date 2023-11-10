@@ -9,12 +9,12 @@ if (params.start_time) {
     time = params.start_time
     size = 1
     timer = "at 2 minutes"
-    cronExpression = "2 * * * *" // Sunday at midnight
+    cronExpression = "*/2 * * * *" // Sunday at midnight
 } else if (params.stop_time) {
     size = 0
     time = params.stop_time
     timer = "at 5 minutes"
-    cronExpression = "5 * * * *" // Saturday at midnight
+    cronExpression = "*/5 * * * *" // Saturday at midnight
 } else {
     error('Either start_time or stop_time must be defined.')
 }
