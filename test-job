@@ -1,14 +1,20 @@
 def appNames = ["harnessweb", "harvey-integration", "judgesAssistant", "stewards-portal", "webapi"]
 def EnvironmentName = "dev"
 def size
-
+def timer
 def time
+def cronExpression
+
 if (params.start_time) {
     time = params.start_time
     size = 1
+    timer = "at 2 minutes"
+    cronExpression = "2 * * * *" // Sunday at midnight
 } else if (params.stop_time) {
     size = 0
     time = params.stop_time
+    timer = "at 5 minutes"
+    cronExpression = "5 * * * *" // Saturday at midnight
 } else {
     error('Either start_time or stop_time must be defined.')
 }
@@ -16,12 +22,13 @@ if (params.start_time) {
 pipeline {
   agent any
   triggers {
-    cron("${time}") 
+    cron("${time}", cronExpression) // Set the cron expression dynamically
   }
   stages {
     stage('LOOP') {
       steps {
         script {
+          echo timer
           appNames.each { appName ->
             def constructedString = "rise-${appName}-${EnvironmentName}-ASG"
 
@@ -32,8 +39,16 @@ pipeline {
                 --max-size $size \
                 --desired-capacity $size
               """
+              // Check the exit status of the AWS CLI command
+              def exitStatus = sh(script: 'echo $?', returnStatus: true)
+              if (exitStatus == 0) {
+                echo "AWS CLI command executed successfully."
+              } else {
+                echo "AWS CLI command failed. Exit status: ${exitStatus}"
+                currentBuild.result = 'FAILURE' // Set the build result to FAILURE
+              }
             } catch (Exception e) {
-              currentBuild.result = 'SUCCESS' // Set the result to SUCCESS even if the sh command fails
+              currentBuild.result = 'FAILURE' // Set the build result to FAILURE
               echo "Exception occurred: ${e.message}"
             }
           }
