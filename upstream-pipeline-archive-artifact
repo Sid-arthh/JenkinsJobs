@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clean workspace') {
+            steps {
+                // cleanWs()
+                echo "Not cleaning workspace"
+            }
+        }
+        stage('Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'rienv', url: 'https://github.com/Sid-arthh/spring-boot-application'
+            }
+        }
+        stage('Hello') {
+            steps {
+                // sh "mvn   clean install"
+                echo "Hello using art.jar"
+            }
+        }
+        stage('Post-Build') {
+            steps {
+                archiveArtifacts artifacts: '**/*.jar', fingerprint: true
+                build job: 'Test-upstream', wait: false
+            }
+        }
+    }
+}
