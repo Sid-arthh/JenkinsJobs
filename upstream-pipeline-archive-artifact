@@ -1,10 +1,17 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(
+            name: 'RUN_POST_BUILD',
+            choices: ['Yes', 'No'],
+            description: 'Run Post-Build stage?'
+        )
+    }
+
     stages {
         stage('Clean workspace') {
             steps {
-                // cleanWs()
                 echo "Not cleaning workspace"
             }
         }
@@ -15,11 +22,13 @@ pipeline {
         }
         stage('Hello') {
             steps {
-                // sh "mvn   clean install"
                 echo "Hello using art.jar"
             }
         }
         stage('Post-Build') {
+            when {
+                expression { params.RUN_POST_BUILD == 'Yes' }
+            }
             steps {
                 archiveArtifacts artifacts: '**/*.jar', fingerprint: true
                 build job: 'Test-upstream', wait: false
