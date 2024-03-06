@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Copy Artifact') {
+            steps {
+                // Copy the artifact from Pipeline 1
+                copyArtifacts projectName: 'Build-Test', filter: '**/*.jar'
+            }
+        }
+        stage('Use Artifact') {
+            steps {
+                script {
+                    sh '''ls -lart'''
+                }
+            }
+        }
+    }
+}
