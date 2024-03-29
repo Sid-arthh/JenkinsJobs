@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        AWS_DEFAULT_REGION = 'your-aws-region'
+        AMI_ID = 'your-ami-id'
+        INSTANCE_TYPE = 't2.micro'
+        INSTANCE_PROFILE_ARN = 'your-instance-profile-arn'
+        SUBNET_ID = 'your-subnet-id'
+        SECURITY_GROUP_ID = 'your-security-group-id'
+        KEY_NAME = 'your-key-name'
+        TAG_NAME = 'your-instance-tag-name'
+    }
+    
+    stages {
+        stage('Launch EC2 Instance') {
+            steps {
+                script {
+                    def launchParams = [
+                        region: env.AWS_DEFAULT_REGION,
+                        ami: env.AMI_ID,
+                        instanceType: env.INSTANCE_TYPE,
+                        securityGroupId: env.SECURITY_GROUP_ID,
+                        subnetId: env.SUBNET_ID,
+                        keyName: env.KEY_NAME,
+                        instanceProfileArn: env.INSTANCE_PROFILE_ARN,
+                        tagSpecifications: [
+                            [
+                                resourceType: 'instance',
+                                tags: [
+                                    [
+                                        key: 'Name',
+                                        value: env.TAG_NAME
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                    
+                    sh "aws ec2 run-instances --region ${launchParams.region} \
+                        --image-id ${launchParams.ami} \
+                        --instance-type ${launchParams.instanceType} \
+                        --security-group-ids ${launchParams.securityGroupId} \
+                        --subnet-id ${launchParams.subnetId} \
+                        --key-name ${launchParams.keyName} \
+                        --iam-instance-profile Arn=${launchParams.instanceProfileArn} \
+                        --tag-specifications 'ResourceType=${launchParams.tagSpecifications[0].resourceType},Tags=[{Key=${launchParams.tagSpecifications[0].tags[0].key},Value=${launchParams.tagSpecifications[0].tags[0].value}}]'"
+                }
+            }
+        }
+    }
+}
