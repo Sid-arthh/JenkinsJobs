@@ -1,0 +1,7 @@
+    post {
+        always {
+            script {
+                currentBuild.displayName = params.Trigger_Deployment
+            }
+        }
+    }
