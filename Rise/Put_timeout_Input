@@ -1,0 +1,94 @@
+pipeline {
+    agent any
+    
+    parameters {
+        // string(name: 'APP_NAME', defaultValue: 'harnessweb', description: 'Application Name')
+        // string(name: 'APP_VERSION', defaultValue: '', description: 'version of application')
+        // choice(name: 'Fetch_Stable_Version', choices: ['No','Yes'], description: 'Select Yes if you want to fetch and use stable version of the app')
+        choice(name: 'Use_Static_Data', choices: ['No','Yes'], description: 'Select Yes If you want to use static Data Directory of the app ')
+        string(name: 'ENV', defaultValue: 'dev', description: 'Environment')
+        choice(name: 'RESOURCE', choices: ['autoscaling','alb'], description: 'Resource to deploy (alb/autoscaling)')
+    }
+
+    stages {
+        stage('clean workspace') {
+            steps {
+                deleteDir()
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git branch: 'dev-test', credentialsId: 'jenkins-ssh-key', url: 'git@bitbucket.org:riseau/platform.git'
+            }
+        }
+         stage('Deploy and Test') {
+            steps {
+                script {
+                    echo "Deploying and Testing app version: ${APP_VERSION}"
+                    currentBuild.description = "AppName: ${APP_NAME}<br/>AppVersion: ${APP_VERSION}<br/>Env: ${ENV}"
+
+                }
+            }
+        }
+
+        stage('Input') {
+           steps {
+               script {
+                try {
+                timeout(time: 1, unit: 'MINUTES') {
+                    try{
+                    // input('Proceed if current version is stable else abort')
+                    def userInput = input(
+                        message: "Proceed or Abort",
+                        parameters: [
+                            choice(name: 'confirmation', choices: ['Yes', 'No'], description: 'Select Yes to proceed or No to abort')
+                        ]
+                    )
+                    echo "User input: ${userInput['confirmation']}"
+                    echo "Copy to s3"
+                    }
+                    catch(err){
+                        echo "ABORTING"
+                        // currentBuild.result = 'FAILURE'
+                        // error "ABORTED"
+                    }
+                 }
+            }
+            catch (err){
+                echo "Aborted or timeout expired"
+            }
+        }
+        }
+        }
+        // stage('Input') {
+        //     steps {
+        //         script {
+        //         def userInput = input(
+        //         id: 'userInput', 
+        //         message: 'Proceed if current version is stable else abort', 
+        //         parameters: [
+        //             [$class: 'BooleanParameterDefinition', defaultValue: true, description: 'Yes', name: 'YES'],
+        //             [$class: 'BooleanParameterDefinition', defaultValue: false, description: 'No', name: 'NO']
+        //         ]
+        //     )
+        //         echo "INPUT IS:${userInput}"
+        //         }
+        //     }
+        // }
+        // stage('Store Stable Build Info and Copy to S3') {
+        //     steps {
+        //         script {
+        //                 echo "Fail"
+                        // sh "echo ${APP_VERSION} > stable-version.txt"
+                        // sh "/usr/local/bin/aws s3 cp stable-version.txt s3://rise-test-web/apps/$ENV/$APP_NAME/stable-version.txt"
+                    
+                        // sh'''echo "https://ap-southeast-2.console.aws.amazon.com/s3/buckets/rise-test-web?region=ap-southeast-2&bucketType=general&prefix=apps/${ENV}/${APP_NAME}/&showversions=false"'''
+                        // currentBuild.result = 'SUCCESS'
+                        
+            //         }
+            //     }
+            // }
+        
+}
+}
